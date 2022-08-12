@@ -1,5 +1,5 @@
 import { Readable, Writable } from 'node:stream'
-import fs, { ReadStream } from 'node:fs'
+import fs from 'node:fs'
 
 function sleep(ms = 0) {
   return new Promise((r) => setTimeout(r, ms))
@@ -133,7 +133,7 @@ async function consumeTransformStreamFile() {
   rs.pipeThrough(ts).pipeTo(ws)
 }
 
-async function decompressGzip(url) {
+async function fetchAndGunzipFile(url) {
   url =
     url ||
     // 'https://shjd-boss.bilibili.co/session_replay_data/LTqWw5mhSueIZEQFNShd8/VIHHT3I8wJByvaYLXwDYV'
