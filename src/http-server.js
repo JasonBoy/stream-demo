@@ -11,7 +11,9 @@ const filename_1_5g_plus_1 = './dist/big-file-1_5g_plus_1.txt'
 
 server.on('request', (req, res) => {
   console.log(req.url, req.headers.origin)
-  res.setHeader('access-control-allow-origin', req.headers['origin'])
+  
+  // add cors
+  res.setHeader('access-control-allow-origin', req.headers['origin'] || '*')
   res.setHeader('Access-Control-Allow-Credentials', true)
   if (req.method.toLowerCase() === 'options') {
     res.end()
