@@ -1,7 +1,7 @@
 import { Transform, PassThrough, Readable, Writable } from 'node:stream'
 import fs from 'node:fs'
 
-// > ll | node src/node-stream.js
+// > ll -a | node src/node-stream.js
 
 function upperCaseStream() {
   let chunkCount = 0
@@ -33,7 +33,7 @@ function upperCaseStream() {
 }
 
 async function fetchFileAndSave() {
-  const res = await fetch('http://localhost:3030/stream-2g', {
+  const res = await fetch('http://localhost:3030/file-44mb', {
     headers: { origin: 'http://localhost:3030' }
   })
   const [r1, r2] = res.body.tee()
@@ -56,5 +56,4 @@ async function fetchFileAndSave() {
 }
 
 upperCaseStream()
-// process.stdin.pipe(new PassThrough()).pipe(process.stdout)
 // fetchFileAndSave()

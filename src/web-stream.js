@@ -1,19 +1,17 @@
 import { Readable, Writable } from 'node:stream'
 import fs from 'node:fs'
+import { sleep } from './utils.js'
 
-function sleep(ms = 0) {
-  return new Promise((r) => setTimeout(r, ms))
-}
-
-const url = 'http://www.baidu.com'
+const url = 'https://www.bilibili.com'
 
 async function fetchData() {
   const response = await fetch(url)
-  const readableByteStream = response.body
   const size = response.headers.get('content-length')
-  // const readableStream = readableByteStream.pipeThrough(
-  //   new TextDecoderStream('utf-8')
-  // )
+  let readableByteStream = response.body
+  // 解码
+  readableByteStream = readableByteStream.pipeThrough(
+    new TextDecoderStream('utf-8')
+  )
   let chunks = 0
   for await (const stringChunk of readableByteStream) {
     console.log('----------')
@@ -29,8 +27,8 @@ function createReadableStream() {
   let pullCount = 0
   return new ReadableStream({
     start(controller) {
-      controller.enqueue(new Uint8Array([1,2,3]))
-      controller.enqueue({a: 1})
+      controller.enqueue(new Uint8Array([1, 2, 3]))
+      controller.enqueue({ a: 1 })
       controller.enqueue('line-1')
       controller.enqueue('line-2')
       console.log('desiredSize:', controller.desiredSize)
@@ -74,14 +72,14 @@ function createWritableStream() {
     },
     write(chunk, controller) {
       console.log('write chunk: ', chunk)
-      this.ret += chunk
+      this.ret += `${chunk}_`
     },
     close() {
       console.log('writable stream close, ret:')
-      console.log(this.ret)
+      // console.log(this.ret)
     },
     abort(err) {
-      console.log('writable stream about: ', err)
+      console.log('writable stream abort: ', err)
     }
   })
 }
@@ -120,16 +118,21 @@ async function consumeTransformStream() {
   const rs = createReadableStream()
   const ts = createTransformStream()
   const ws = createWritableStream()
-  // const ws = Writable.toWeb(process.stdout)
-  rs.pipeThrough(ts).pipeTo(ws)
+  const wsFile = Writable.toWeb(
+    fs.createWriteStream('./dist/transform-to-file.txt')
+  )
+  const [r1, r2] = rs.pipeThrough(ts).tee()
+  r1.pipeTo(ws)
+  r2.pipeTo(wsFile)
   // rs.pipeTo(ws)
 }
 
 async function consumeTransformStreamFile() {
-  const rs = Readable.toWeb(fs.createReadStream('./dist/big-file.txt'))
+  const rs = createReadableStream()
   const ts = createTransformStream()
-
-  const ws = Writable.toWeb(process.stdout)
+  const ws = Writable.toWeb(
+    fs.createWriteStream('./dist/transform-to-file.txt')
+  )
   rs.pipeThrough(ts).pipeTo(ws)
 }
 
@@ -178,23 +181,22 @@ async function fetchAndGunzipFile(url) {
       })
     )
   return {
+    str: ret,
     size,
-    gunzipSize,
-    str: ret
+    gunzipSize
   }
 }
 
 ;(async function run() {
   // fetchData()
-  consumeReadableStream()
+  // consumeReadableStream()
   // consumeWritableStream()
   // consumeTransformStream()
   // consumeTransformStreamFile()
 
-
-  // const { size, gunzipSize, str } = await decompressGzip()
-  // const ret = JSON.parse(str)
-  // console.log(ret)
-  // console.log('length: ', ret.length)
-  // console.log(`size [${size}] -> [${gunzipSize}]`)
+  const { size, gunzipSize, str } = await fetchAndGunzipFile()
+  const ret = JSON.parse(str)
+  console.log(ret)
+  console.log('length: ', ret.length)
+  console.log(`size [${size}] -> [${gunzipSize}]`)
 })()
